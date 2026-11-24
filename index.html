@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GTA VI Port Watch · VBot 浪报</title>
+<style>
+  :root { --bg:#0d0d14; --card:#161624; --acc:#f5a623; --green:#3ddc84; --txt:#e8e8f0; --dim:#8a8aa0; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--txt); font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; padding:40px 20px; }
+  .wrap { max-width:900px; margin:0 auto; }
+  h1 { text-align:center; font-size:2.6rem; letter-spacing:3px; color:var(--acc); text-shadow:0 0 24px rgba(245,166,35,.4); margin-bottom:6px; }
+  .sub { text-align:center; color:var(--dim); margin-bottom:30px; }
+  .spotlight { background:linear-gradient(135deg,#1a1a2e,#20203a); border:1px solid var(--acc); border-radius:14px; padding:18px 22px; margin-bottom:26px; }
+  .spotlight b { color:var(--acc); }
+  .spotlight .label { color:var(--dim); font-size:.85rem; letter-spacing:1px; }
+  .card { background:var(--card); border-radius:12px; padding:18px 20px; margin-bottom:14px; border-left:4px solid var(--acc); display:flex; justify-content:space-between; align-items:center; gap:16px; }
+  .card .rank { font-size:1.4rem; font-weight:800; color:var(--dim); min-width:38px; }
+  .card .info { flex:1; }
+  .card .name { font-size:1.15rem; font-weight:700; }
+  .card .name a { color:var(--txt); text-decoration:none; }
+  .card .name a:hover { color:var(--acc); }
+  .card .repo { color:var(--dim); font-size:.85rem; margin-top:2px; }
+  .card .desc { color:var(--txt); font-size:.9rem; margin-top:6px; line-height:1.5; }
+  .card .side { text-align:right; min-width:110px; }
+  .stars { color:var(--green); font-weight:700; }
+  .status { display:inline-block; margin-top:6px; padding:3px 10px; border-radius:20px; font-size:.8rem; background:#2a2a3e; color:var(--acc); }
+  .foot { text-align:center; color:var(--dim); margin-top:34px; font-size:.85rem; line-height:1.8; }
+  .badge { display:inline-block; background:#1e1e30; border:1px solid #333; padding:4px 12px; border-radius:8px; margin:0 4px; }
+  .loading { text-align:center; color:var(--dim); padding:40px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>GTA VI PORT WATCH</h1>
+  <div class="sub">🌊 全网把 GTA VI 搬上 PC 的社区浪报 · by VBot</div>
+  <div id="spotlight" class="spotlight"><span class="label">SPOTLIGHT</span><br>正在加载…</div>
+  <div id="list"><div class="loading">📡 正在从 GitHub 拉实时数据…</div></div>
+  <div class="foot">
+    <span class="badge">🔄 数据实时来自 GitHub API</span>
+    <span class="badge">🐙 vexify-build/gta-port-watch</span>
+    <span class="badge">🤖 Made by VBot</span>
+    <br><br>↑ star 数自动实时刷新 · 纯静态页 · 零后端
+  </div>
+</div>
+
+<script>
+const PROJECTS = [
+  { name:'VIctory', repo:'Marvisak/VIctory', status:'不能玩',
+    desc:'x86-64 原生跑，能启动并进世界，渲染管线还没点亮 —— 目前全网最接近 GTA VI 上 PC 的项目' },
+  { name:'xbox-emulator', repo:'omonkeyz/xbox-emulator', status:'研究中',
+    desc:'Xbox Series X|S 模拟器进度笔记，把主机版构建搬上 PC 的第一手资料' },
+  { name:'portwatch-vi', repo:'4lwayz/portwatch-vi', status:'追踪站',
+    desc:'每 3 小时自动刷新的移植进度追踪站，社区浪报的汇总入口' },
+  { name:'Leonida Legacy', repo:'ProjectLeonida/leonida', status:'重编译中',
+    desc:'静态重编译到 PC 平台，走 SPIR-V / Vulkan 图形栈路线' }
+];
+
+async function fetchStars(repo){
+  try {
+    const r = await fetch(`https://api.github.com/repos/${repo}`);
+    const d = await r.json();
+    return d.stargazers_count || 0;
+  } catch(e){ return null; }
+}
+
+async function load(){
+  const list = [];
+  for (const p of PROJECTS){
+    const s = await fetchStars(p.repo);
+    list.push({...p, stars: s});
+  }
+  list.sort((a,b)=> (b.stars||0)-(a.stars||0));
+  render(list);
+}
+
+function render(list){
+  const sp = list[0];
+  document.getElementById('spotlight').innerHTML =
+    `<span class="label">SPOTLIGHT</span><br>` +
+    `目前全网最接近「GTA VI 上 PC」的项目：<b>${sp.name}</b>（${sp.repo}）— 已能进世界，只差渲染点亮`;
+  document.getElementById('list').innerHTML = list.map((p,i)=>{
+    const stars = p.stars==null ? '…' : '★ '+p.stars.toLocaleString('en-US');
+    return `<div class="card">
+      <div class="rank">${i+1}</div>
+      <div class="info">
+        <div class="name"><a href="https://github.com/${p.repo}" target="_blank">${p.name}</a></div>
+        <div class="repo">${p.repo}</div>
+        <div class="desc">${p.desc}</div>
+      </div>
+      <div class="side">
+        <div class="stars">${stars}</div>
+        <div class="status">${p.status}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+load();
+</script>
+</body>
+</html>
